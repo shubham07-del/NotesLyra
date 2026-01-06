@@ -11,14 +11,21 @@ const PDFDetail = () => {
     const [pdf, setPdf] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [isPurchased, setIsPurchased] = useState(false);
+    const [paymentMode, setPaymentMode] = useState('paid');
+    const [loading, setLoading] = useState(false);
     const { user } = useContext(AuthContext);
 
     useEffect(() => {
-        const fetchPdf = async () => {
+        const fetchData = async () => {
             try {
+                // Fetch PDF
                 const { data } = await axios.get(`${API_URL}/api/pdfs`);
                 const foundPdf = data.find(p => p._id === id);
                 setPdf(foundPdf);
+
+                // Fetch payment settings
+                const settingsRes = await axios.get(`${API_URL}/api/settings/payment`);
+                setPaymentMode(settingsRes.data.mode || 'paid');
 
                 if (user) {
                     const { data: myOrders } = await axios.get(`${API_URL}/api/orders/my`, {
@@ -31,7 +38,7 @@ const PDFDetail = () => {
                 console.error(error);
             }
         };
-        fetchPdf();
+        fetchData();
     }, [id, user]);
 
     if (!pdf) return (
@@ -40,11 +47,29 @@ const PDFDetail = () => {
         </div>
     );
 
-    const buyHandler = () => {
+    const buyHandler = async () => {
         if (!user) {
             navigate('/login');
             return;
         }
+
+        // If free mode, grant access immediately
+        if (paymentMode === 'free') {
+            setLoading(true);
+            try {
+                const config = { headers: { Authorization: `Bearer ${user.token}` } };
+                await axios.post(`${API_URL}/api/orders/free`, { pdfId: pdf._id }, config);
+                setLoading(false);
+                alert('Access granted! You can now download the notes.');
+                navigate('/dashboard');
+            } catch (error) {
+                setLoading(false);
+                alert(error.response?.data?.message || 'Failed to get access');
+            }
+            return;
+        }
+
+        // Paid mode - show payment modal
         setShowModal(true);
     };
 
@@ -89,9 +114,15 @@ const PDFDetail = () => {
                         <div className="flex items-center justify-between border-t border-gray-100 pt-8">
                             <div>
                                 <span className="text-gray-400 text-sm font-medium uppercase block mb-1">Price</span>
-                                <span className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-indigo-600">
-                                    ₹{pdf.price}
-                                </span>
+                                {paymentMode === 'free' ? (
+                                    <span className="text-4xl font-extrabold text-green-600">
+                                        FREE
+                                    </span>
+                                ) : (
+                                    <span className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-indigo-600">
+                                        ₹{pdf.price}
+                                    </span>
+                                )}
                             </div>
 
                             {isPurchased ? (
@@ -99,14 +130,15 @@ const PDFDetail = () => {
                                     onClick={() => navigate('/dashboard')}
                                     className="px-8 py-4 bg-green-500 text-white rounded-xl shadow-lg hover:shadow-green-500/30 hover:-translate-y-1 transition-all duration-300 font-bold text-lg flex items-center"
                                 >
-                                    <span className="mr-2">💾</span> Access File
+                                    <span className="mr-2">💾</span>Access File
                                 </button>
                             ) : (
                                 <button
                                     onClick={buyHandler}
-                                    className="px-8 py-4 bg-gradient-to-r from-primary-600 to-indigo-600 text-white rounded-xl shadow-xl hover:shadow-primary-500/40 hover:-translate-y-1 transition-all duration-300 font-bold text-lg animate-pulse"
+                                    disabled={loading}
+                                    className={`px-8 py-4 ${paymentMode === 'free' ? 'bg-green-500 hover:shadow-green-500/40' : 'bg-gradient-to-r from-primary-600 to-indigo-600 hover:shadow-primary-500/40'} text-white rounded-xl shadow-xl hover:-translate-y-1 transition-all duration-300 font-bold text-lg ${paymentMode === 'paid' ? 'animate-pulse' : ''} disabled:opacity-50`}
                                 >
-                                    Unlock Now
+                                    {loading ? 'Getting Access...' : paymentMode === 'free' ? 'Get Free Access' : 'Unlock Now'}
                                 </button>
                             )}
                         </div>
@@ -131,3 +163,4 @@ const PDFDetail = () => {
 };
 
 export default PDFDetail;
+

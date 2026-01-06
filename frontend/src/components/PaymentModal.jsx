@@ -9,7 +9,7 @@ const PaymentModal = ({ pdf, onClose, onSuccess }) => {
     const { user } = useContext(AuthContext);
 
     // Dynamic UPI link with exact amount
-    const upiLink = `upi://pay?pa=paytm.s1v8x5w@pty&pn=Sriram Lenka&am=${pdf.price}&cu=INR`;
+    const upiLink = `upi://pay?pa=lenkasriram1@ybl&pn=Sriram Lenka&am=${pdf.price}&cu=INR`;
 
     const submitHandler = async (e) => {
         e.preventDefault();

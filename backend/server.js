@@ -48,10 +48,12 @@ connectDB();
 const authRoutes = require('./routes/authRoutes');
 const pdfRoutes = require('./routes/pdfRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/pdfs', pdfRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.get('/', (req, res) => {
     res.send('API is running...');

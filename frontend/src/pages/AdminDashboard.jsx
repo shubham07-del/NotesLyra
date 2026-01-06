@@ -4,7 +4,7 @@ import { API_URL } from '../config';
 import AuthContext from '../context/AuthContext';
 
 const AdminDashboard = () => {
-    const [activeTab, setActiveTab] = useState('upload'); // upload | orders | settings
+    const [activeTab, setActiveTab] = useState('upload'); // upload | orders | payment | settings
     const [orders, setOrders] = useState([]);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -20,11 +20,19 @@ const AdminDashboard = () => {
     const [currentPassword, setCurrentPassword] = useState('');
     const [settingsMessage, setSettingsMessage] = useState('');
 
+    // Payment settings state
+    const [paymentMode, setPaymentMode] = useState('paid');
+    const [paymentMessage, setPaymentMessage] = useState('');
+    const [paymentLoading, setPaymentLoading] = useState(false);
+
     const { user, login } = useContext(AuthContext);
 
     useEffect(() => {
         if (activeTab === 'orders') {
             fetchOrders();
+        }
+        if (activeTab === 'payment') {
+            fetchPaymentSettings();
         }
     }, [activeTab]);
 
@@ -36,6 +44,29 @@ const AdminDashboard = () => {
         } catch (error) {
             console.error(error);
         }
+    };
+
+    const fetchPaymentSettings = async () => {
+        try {
+            const { data } = await axios.get(`${API_URL}/api/settings/payment`);
+            setPaymentMode(data.mode || 'paid');
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handlePaymentSettingsUpdate = async (e) => {
+        e.preventDefault();
+        setPaymentLoading(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await axios.put(`${API_URL}/api/settings/payment`, { mode: paymentMode }, config);
+            setPaymentMessage('Payment settings updated successfully!');
+            setTimeout(() => setPaymentMessage(''), 3000);
+        } catch (error) {
+            setPaymentMessage(error.response?.data?.message || 'Update failed');
+        }
+        setPaymentLoading(false);
     };
 
     const handleUpload = async (e) => {
@@ -121,6 +152,12 @@ const AdminDashboard = () => {
                                 📦 Manage Orders
                             </button>
                             <button
+                                onClick={() => setActiveTab('payment')}
+                                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'payment' ? 'bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-200' : 'text-gray-600 hover:bg-gray-50'}`}
+                            >
+                                💳 Payment Settings
+                            </button>
+                            <button
                                 onClick={() => setActiveTab('settings')}
                                 className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'settings' ? 'bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-200' : 'text-gray-600 hover:bg-gray-50'}`}
                             >
@@ -201,9 +238,13 @@ const AdminDashboard = () => {
                                                         <div className="text-xs font-semibold text-green-600">₹{order.amount}</div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
-                                                        <a href={`/api/${order.screenshotPath}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-900 text-sm font-medium underline">
-                                                            View Image
-                                                        </a>
+                                                        {order.screenshotPath === 'FREE_ACCESS' ? (
+                                                            <span className="text-green-600 text-sm font-medium">Free Access</span>
+                                                        ) : (
+                                                            <a href={`/api/${order.screenshotPath}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-900 text-sm font-medium underline">
+                                                                View Image
+                                                            </a>
+                                                        )}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${order.status === 'approved' ? 'bg-green-100 text-green-800' : order.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
@@ -223,6 +264,64 @@ const AdminDashboard = () => {
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'payment' && (
+                            <div className="max-w-xl mx-auto">
+                                <h2 className="text-xl font-bold text-gray-800 mb-6">Payment Settings</h2>
+                                {paymentMessage && (
+                                    <div className={`mb-6 p-4 rounded-xl text-sm ${paymentMessage.includes('failed') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'} animate-fade-in`}>
+                                        {paymentMessage}
+                                    </div>
+                                )}
+                                <form onSubmit={handlePaymentSettingsUpdate} className="space-y-6">
+                                    <div className="p-6 bg-gray-50 rounded-xl border border-gray-100">
+                                        <h3 className="font-semibold text-gray-800 mb-4">Access Mode</h3>
+                                        <p className="text-sm text-gray-500 mb-4">Choose whether users need to pay for notes or get free access.</p>
+
+                                        <div className="space-y-3">
+                                            <label className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${paymentMode === 'paid' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                                                <input
+                                                    type="radio"
+                                                    name="paymentMode"
+                                                    value="paid"
+                                                    checked={paymentMode === 'paid'}
+                                                    onChange={(e) => setPaymentMode(e.target.value)}
+                                                    className="h-4 w-4 text-primary-600"
+                                                />
+                                                <div className="ml-3">
+                                                    <span className="font-medium text-gray-900">💳 Paid Mode</span>
+                                                    <p className="text-sm text-gray-500">Users must pay and upload screenshot for admin approval</p>
+                                                </div>
+                                            </label>
+
+                                            <label className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${paymentMode === 'free' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                                                <input
+                                                    type="radio"
+                                                    name="paymentMode"
+                                                    value="free"
+                                                    checked={paymentMode === 'free'}
+                                                    onChange={(e) => setPaymentMode(e.target.value)}
+                                                    className="h-4 w-4 text-green-600"
+                                                />
+                                                <div className="ml-3">
+                                                    <span className="font-medium text-gray-900">🆓 Free Mode</span>
+                                                    <p className="text-sm text-gray-500">Users get instant access without payment</p>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 bg-blue-50 rounded-xl border border-blue-200">
+                                        <h3 className="font-semibold text-blue-800 mb-2">💡 Current UPI ID</h3>
+                                        <p className="text-blue-700 font-mono">lenkasriram1@ybl</p>
+                                    </div>
+
+                                    <button type="submit" disabled={paymentLoading} className="btn-primary w-full">
+                                        {paymentLoading ? 'Saving...' : 'Save Payment Settings'}
+                                    </button>
+                                </form>
                             </div>
                         )}
 
@@ -283,3 +382,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

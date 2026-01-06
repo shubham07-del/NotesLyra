@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const Order = require('../models/Order');
 const PDF = require('../models/PDF');
+const PaymentSettings = require('../models/PaymentSettings');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // Multer Storage for Screenshots
@@ -24,6 +25,53 @@ const upload = multer({
         }
         cb(null, true);
     },
+});
+
+// @desc    Create new order (Free mode - no screenshot required)
+// @route   POST /api/orders/free
+// @access  Private
+router.post('/free', protect, async (req, res) => {
+    try {
+        const { pdfId } = req.body;
+        const pdf = await PDF.findById(pdfId);
+
+        if (!pdf) {
+            return res.status(404).json({ message: 'PDF not found' });
+        }
+
+        // Verify payment mode is free
+        const settings = await PaymentSettings.getSettings();
+        if (settings.mode !== 'free') {
+            return res.status(400).json({ message: 'Payment is required' });
+        }
+
+        // Check if already ordered
+        const existingOrder = await Order.findOne({ userId: req.user._id, pdfId });
+        if (existingOrder) {
+            if (existingOrder.status === 'approved') {
+                return res.status(400).json({ message: 'You already own this note' });
+            }
+            // Update existing order to approved if it was pending/rejected
+            existingOrder.status = 'approved';
+            existingOrder.screenshotPath = 'FREE_ACCESS';
+            await existingOrder.save();
+            return res.json(existingOrder);
+        }
+
+        const order = new Order({
+            userId: req.user._id,
+            pdfId,
+            amount: 0,
+            screenshotPath: 'FREE_ACCESS',
+            status: 'approved'
+        });
+
+        const createdOrder = await order.save();
+        res.status(201).json(createdOrder);
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
 
 // @desc    Create new order (Upload screenshot)
