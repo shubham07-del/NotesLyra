@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 import AuthContext from '../context/AuthContext';
 
 const AdminDashboard = () => {
@@ -30,7 +31,7 @@ const AdminDashboard = () => {
     const fetchOrders = async () => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await axios.get('/api/orders', config);
+            const { data } = await axios.get(`${API_URL}/api/orders`, config);
             setOrders(data);
         } catch (error) {
             console.error(error);
@@ -54,7 +55,7 @@ const AdminDashboard = () => {
                     'Content-Type': 'multipart/form-data',
                 },
             };
-            await axios.post('/api/pdfs', formData, config);
+            await axios.post(`${API_URL}/api/pdfs`, formData, config);
             setMessage('PDF Uploaded Successfully');
             setTitle(''); setDescription(''); setPrice(''); setFile(null);
             setTimeout(() => setMessage(''), 3000);
@@ -66,7 +67,7 @@ const AdminDashboard = () => {
     const updateOrderStatus = async (id, status) => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await axios.put(`/api/orders/${id}`, { status }, config);
+            await axios.put(`${API_URL}/api/orders/${id}`, { status }, config);
             fetchOrders();
         } catch (error) {
             console.error(error);
@@ -77,7 +78,7 @@ const AdminDashboard = () => {
         e.preventDefault();
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await axios.put('/api/auth/profile', {
+            const { data } = await axios.put(`${API_URL}/api/auth/profile`, {
                 email: newEmail || undefined,
                 password: newPassword || undefined,
                 currentPassword

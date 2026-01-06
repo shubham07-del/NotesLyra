@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from '../config';
 import AuthContext from '../context/AuthContext';
 
 const Login = () => {
@@ -13,7 +14,7 @@ const Login = () => {
     const submitHandler = async (e) => {
         e.preventDefault();
         try {
-            const { data } = await axios.post('/api/auth/login', { email, password });
+            const { data } = await axios.post(`${API_URL}/api/auth/login`, { email, password });
             login(data);
             if (data.role === 'admin') {
                 navigate('/admin');

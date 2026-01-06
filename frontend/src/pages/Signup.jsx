@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from '../config';
 import AuthContext from '../context/AuthContext';
 
 const Signup = () => {
@@ -14,7 +15,7 @@ const Signup = () => {
     const submitHandler = async (e) => {
         e.preventDefault();
         try {
-            const { data } = await axios.post('/api/auth/signup', { name, email, password });
+            const { data } = await axios.post(`${API_URL}/api/auth/signup`, { name, email, password });
             login(data);
             navigate('/');
         } catch (err) {

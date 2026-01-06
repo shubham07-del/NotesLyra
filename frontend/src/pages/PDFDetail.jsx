@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from '../config';
 import AuthContext from '../context/AuthContext';
 import PaymentModal from '../components/PaymentModal';
 
@@ -15,12 +16,12 @@ const PDFDetail = () => {
     useEffect(() => {
         const fetchPdf = async () => {
             try {
-                const { data } = await axios.get('/api/pdfs');
+                const { data } = await axios.get(`${API_URL}/api/pdfs`);
                 const foundPdf = data.find(p => p._id === id);
                 setPdf(foundPdf);
 
                 if (user) {
-                    const { data: myOrders } = await axios.get('/api/orders/my', {
+                    const { data: myOrders } = await axios.get(`${API_URL}/api/orders/my`, {
                         headers: { Authorization: `Bearer ${user.token}` }
                     });
                     const order = myOrders.find(o => o.pdfId && o.pdfId._id === id && o.status === 'approved');

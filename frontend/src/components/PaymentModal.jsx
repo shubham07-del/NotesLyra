@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 import AuthContext from '../context/AuthContext';
 
 const PaymentModal = ({ pdf, onClose, onSuccess }) => {
@@ -29,7 +30,7 @@ const PaymentModal = ({ pdf, onClose, onSuccess }) => {
                     'Content-Type': 'multipart/form-data',
                 },
             };
-            await axios.post('/api/orders', formData, config);
+            await axios.post(`${API_URL}/api/orders`, formData, config);
             setLoading(false);
             onSuccess();
         } catch (error) {

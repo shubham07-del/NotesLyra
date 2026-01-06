@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 import AuthContext from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -11,7 +12,7 @@ const UserDashboard = () => {
         const fetchOrders = async () => {
             try {
                 const config = { headers: { Authorization: `Bearer ${user.token}` } };
-                const { data } = await axios.get('/api/orders/my', config);
+                const { data } = await axios.get(`${API_URL}/api/orders/my`, config);
                 setOrders(data);
             } catch (error) {
                 console.error(error);
@@ -26,7 +27,7 @@ const UserDashboard = () => {
                 headers: { Authorization: `Bearer ${user.token}` },
                 responseType: 'blob',
             };
-            const response = await axios.get(`/api/pdfs/download/${id}`, config);
+            const response = await axios.get(`${API_URL}/api/pdfs/download/${id}`, config);
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
