@@ -53,8 +53,8 @@ const Navbar = () => {
                 <div className="flex justify-between h-20 items-center">
                     <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => navigate('/')}>
                         {/* Logo Icon */}
-                        <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3 transform hover:rotate-12 transition-transform duration-300">
-                            N
+                        <div>
+                            <img src="/nursing-vidya.jpeg" alt="" className='h-10 w-auto' />
                         </div>
                         <span className="font-bold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-primary-700 to-indigo-600 tracking-tight">
                             Nursing Vidya
