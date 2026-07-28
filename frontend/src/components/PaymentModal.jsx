@@ -15,7 +15,7 @@ const PaymentModal = ({ pdf, onClose, onSuccess }) => {
             const { data } = await axios.post(`${API_URL}/api/orders/razorpay/create`, { pdfId: pdf._id }, config);
             
             const options = {
-                key: "rzp_test_TIsflHt9PAEqFC", // Razorpay ID
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Razorpay ID
                 amount: data.razorpayOrder.amount,
                 currency: "INR",
                 name: "Nursing Vidya",

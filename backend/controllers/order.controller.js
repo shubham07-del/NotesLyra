@@ -5,8 +5,8 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
 const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_ID,
-    key_secret: process.env.RAZORPAY_SECRET,
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 // @desc    Create new order (Free mode - no screenshot required)
@@ -163,9 +163,14 @@ const createRazorpayOrder = async (req, res) => {
             }
         }
 
+        const amountInPaise = pdf.price * 100;
+        if (amountInPaise < 100) {
+            return res.status(400).json({ message: 'Amount must be at least ₹1' });
+        }
+
         // Create razorpay order
         const options = {
-            amount: pdf.price * 100, // amount in the smallest currency unit
+            amount: amountInPaise, // amount in the smallest currency unit
             currency: "INR",
             receipt: `receipt_order_${Date.now()}`
         };
@@ -199,9 +204,13 @@ const verifyRazorpayPayment = async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.status(400).json({ message: 'Missing payment verification details' });
+        }
+
         const body = razorpay_order_id + "|" + razorpay_payment_id;
         const expectedSignature = crypto
-            .createHmac("sha256", process.env.RAZORPAY_SECRET)
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
             .update(body.toString())
             .digest("hex");
 
