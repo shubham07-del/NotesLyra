@@ -1,5 +1,5 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useContext, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../config';
 import AuthContext from '../context/AuthContext';
@@ -8,8 +8,19 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useContext(AuthContext);
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        if (queryParams.get('verified') === 'true') {
+            setSuccessMessage('Email successfully verified! You can now log in.');
+        } else if (queryParams.get('error') === 'invalid_token') {
+            setError('Invalid or expired verification token.');
+        }
+    }, [location]);
 
     const submitHandler = async (e) => {
         e.preventDefault();
@@ -28,26 +39,23 @@ const Login = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* Background Decorations */}
-            <div className="absolute top-0 left-0 w-full h-full z-0 pointer-events-none">
-                <div className="absolute top-[10%] left-[20%] w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-30 animate-blob"></div>
-                <div className="absolute top-[40%] right-[20%] w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-30 animate-blob animation-delay-2000"></div>
-            </div>
+
 
             <div className="max-w-md w-full relative z-10 space-y-8 glass-card p-10 rounded-3xl animate-fade-in">
                 <div>
-                    <h2 className="mt-2 text-center text-3xl font-bold text-gray-900 tracking-tight">Welcome Back</h2>
-                    <p className="mt-2 text-center text-sm text-gray-600">
+                    <h2 className="mt-2 text-center text-3xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">Welcome Back</h2>
+                    <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-300">
                         Sign in to access your premium notes
                     </p>
                 </div>
 
                 {error && <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg text-center border border-red-100">{error}</div>}
+                {successMessage && <div className="bg-green-50 text-green-600 text-sm p-3 rounded-lg text-center border border-green-100">{successMessage}</div>}
 
                 <form className="mt-8 space-y-6" onSubmit={submitHandler}>
                     <div className="space-y-4">
                         <div>
-                            <label className="text-sm font-medium text-gray-700 ml-1">Email Address</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Email Address</label>
                             <input
                                 type="email"
                                 required
@@ -58,7 +66,7 @@ const Login = () => {
                             />
                         </div>
                         <div>
-                            <label className="text-sm font-medium text-gray-700 ml-1">Password</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Password</label>
                             <input
                                 type="password"
                                 required
@@ -81,7 +89,7 @@ const Login = () => {
                 </form>
 
                 <div className="text-center mt-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
                         Don't have an account?{' '}
                         <Link to="/signup" className="font-medium text-primary-600 hover:text-primary-500 hover:underline transition-colors">
                             Create one now

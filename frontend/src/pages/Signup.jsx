@@ -9,6 +9,7 @@ const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const navigate = useNavigate();
     const { login } = useContext(AuthContext);
 
@@ -16,34 +17,46 @@ const Signup = () => {
         e.preventDefault();
         try {
             const { data } = await axios.post(`${API_URL}/api/auth/signup`, { name, email, password });
-            login(data);
-            navigate('/');
+            setSuccessMessage(data.message || 'Registration successful! Please check your email to verify your account.');
+            setError('');
         } catch (err) {
             setError(err.response?.data?.message || 'Signup failed');
+            setSuccessMessage('');
         }
     };
 
     return (
         <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* Background Decorations */}
-            <div className="absolute top-0 left-0 w-full h-full z-0 pointer-events-none">
-                <div className="absolute bottom-[20%] left-[10%] w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-[100px] opacity-30 animate-blob"></div>
-                <div className="absolute top-[10%] right-[10%] w-80 h-80 bg-primary-300 rounded-full mix-blend-multiply filter blur-[100px] opacity-30 animate-blob animation-delay-2000"></div>
-            </div>
+
 
             <div className="max-w-md w-full relative z-10 space-y-8 glass-card p-10 rounded-3xl animate-fade-in">
-                <div>
-                    <h2 className="mt-2 text-center text-3xl font-bold text-gray-900 tracking-tight">Create Account</h2>
-                    <p className="mt-2 text-center text-sm text-gray-600">
-                        Join thousands of students learning effectively
-                    </p>
-                </div>
-                {error && <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg text-center border border-red-100">{error}</div>}
+                {successMessage ? (
+                    <div className="text-center py-8">
+                        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
+                            <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-50 mb-4">Verify Your Email</h2>
+                        <p className="text-slate-600 dark:text-slate-300 mb-8">{successMessage}</p>
+                        <Link to="/login" className="btn-primary w-full py-3 inline-block shadow-lg hover:shadow-xl">
+                            Go to Login
+                        </Link>
+                    </div>
+                ) : (
+                    <>
+                        <div>
+                            <h2 className="mt-2 text-center text-3xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">Create Account</h2>
+                            <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-300">
+                                Join thousands of students learning effectively
+                            </p>
+                        </div>
+                        {error && <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg text-center border border-red-100">{error}</div>}
 
                 <form className="mt-8 space-y-6" onSubmit={submitHandler}>
                     <div className="space-y-4">
                         <div>
-                            <label className="text-sm font-medium text-gray-700 ml-1">Full Name</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Full Name</label>
                             <input
                                 type="text"
                                 required
@@ -54,7 +67,7 @@ const Signup = () => {
                             />
                         </div>
                         <div>
-                            <label className="text-sm font-medium text-gray-700 ml-1">Email Address</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Email Address</label>
                             <input
                                 type="email"
                                 required
@@ -65,7 +78,7 @@ const Signup = () => {
                             />
                         </div>
                         <div>
-                            <label className="text-sm font-medium text-gray-700 ml-1">Password</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Password</label>
                             <input
                                 type="password"
                                 required
@@ -88,13 +101,15 @@ const Signup = () => {
                 </form>
 
                 <div className="text-center mt-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
                         Already have an account?{' '}
                         <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500 hover:underline transition-colors">
                             Sign in here
                         </Link>
                     </p>
                 </div>
+                </>
+                )}
             </div>
         </div>
     );

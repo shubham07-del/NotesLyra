@@ -1,10 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const Order = require('../models/Order');
-const PDF = require('../models/PDF');
-const PaymentSettings = require('../models/PaymentSettings');
 const { protect, admin } = require('../middleware/authMiddleware');
+const {
+    createFreeOrder,
+    createOrder,
+    getMyOrders,
+    getOrders,
+    updateOrder,
+    createRazorpayOrder,
+    verifyRazorpayPayment
+} = require('../controllers/order.controller');
 
 // Multer Storage for Screenshots
 const storage = multer.diskStorage({
@@ -30,136 +36,36 @@ const upload = multer({
 // @desc    Create new order (Free mode - no screenshot required)
 // @route   POST /api/orders/free
 // @access  Private
-router.post('/free', protect, async (req, res) => {
-    try {
-        const { pdfId } = req.body;
-        const pdf = await PDF.findById(pdfId);
-
-        if (!pdf) {
-            return res.status(404).json({ message: 'PDF not found' });
-        }
-
-        // Verify payment mode is free
-        const settings = await PaymentSettings.getSettings();
-        if (settings.mode !== 'free') {
-            return res.status(400).json({ message: 'Payment is required' });
-        }
-
-        // Check if already ordered
-        const existingOrder = await Order.findOne({ userId: req.user._id, pdfId });
-        if (existingOrder) {
-            if (existingOrder.status === 'approved') {
-                return res.status(400).json({ message: 'You already own this note' });
-            }
-            // Update existing order to approved if it was pending/rejected
-            existingOrder.status = 'approved';
-            existingOrder.screenshotPath = 'FREE_ACCESS';
-            await existingOrder.save();
-            return res.json(existingOrder);
-        }
-
-        const order = new Order({
-            userId: req.user._id,
-            pdfId,
-            amount: 0,
-            screenshotPath: 'FREE_ACCESS',
-            status: 'approved'
-        });
-
-        const createdOrder = await order.save();
-        res.status(201).json(createdOrder);
-
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+router.post('/free', protect, createFreeOrder);
 
 // @desc    Create new order (Upload screenshot)
 // @route   POST /api/orders
 // @access  Private
-router.post('/', protect, upload.single('screenshot'), async (req, res) => {
-    try {
-        const { pdfId } = req.body;
-        const pdf = await PDF.findById(pdfId);
+router.post('/', protect, upload.single('screenshot'), createOrder);
 
-        if (!pdf) {
-            return res.status(404).json({ message: 'PDF not found' });
-        }
+// @desc    Create Razorpay order
+// @route   POST /api/orders/razorpay/create
+// @access  Private
+router.post('/razorpay/create', protect, createRazorpayOrder);
 
-        // Check if already ordered
-        const existingOrder = await Order.findOne({ userId: req.user._id, pdfId });
-        if (existingOrder) {
-            // If rejected, might allow re-ordering, but for now just return existing
-            if (existingOrder.status === 'approved') {
-                return res.status(400).json({ message: 'You already own this note' });
-            }
-            // If pending, tell them to wait
-            if (existingOrder.status === 'pending') {
-                return res.status(400).json({ message: 'Order already pending approval' });
-            }
-        }
-
-        const order = new Order({
-            userId: req.user._id,
-            pdfId,
-            amount: pdf.price,
-            screenshotPath: req.file.path,
-            status: 'pending'
-        });
-
-        const createdOrder = await order.save();
-        res.status(201).json(createdOrder);
-
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+// @desc    Verify Razorpay payment
+// @route   POST /api/orders/razorpay/verify
+// @access  Private
+router.post('/razorpay/verify', protect, verifyRazorpayPayment);
 
 // @desc    Get logged in user orders
 // @route   GET /api/orders/my
 // @access  Private
-router.get('/my', protect, async (req, res) => {
-    try {
-        const orders = await Order.find({ userId: req.user._id }).populate('pdfId', 'title description');
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+router.get('/my', protect, getMyOrders);
 
 // @desc    Get all orders (Admin)
 // @route   GET /api/orders
 // @access  Admin
-router.get('/', protect, admin, async (req, res) => {
-    try {
-        const orders = await Order.find({})
-            .populate('userId', 'name email')
-            .populate('pdfId', 'title price')
-            .sort({ createdAt: -1 });
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+router.get('/', protect, admin, getOrders);
 
 // @desc    Update order status
 // @route   PUT /api/orders/:id
 // @access  Admin
-router.put('/:id', protect, admin, async (req, res) => {
-    try {
-        const { status } = req.body;
-        const order = await Order.findById(req.params.id);
-
-        if (order) {
-            order.status = status;
-            const updatedOrder = await order.save();
-            res.json(updatedOrder);
-        } else {
-            res.status(404).json({ message: 'Order not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+router.put('/:id', protect, admin, updateOrder);
 
 module.exports = router;

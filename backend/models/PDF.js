@@ -4,6 +4,7 @@ const pdfSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: { type: String },
     price: { type: Number, required: true },
+    isFree: { type: Boolean, default: false },
     filePath: { type: String, required: true },
     category: { type: String },
     semester: { type: String },

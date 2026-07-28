@@ -8,11 +8,13 @@ import Signup from './pages/Signup';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import PDFDetail from './pages/PDFDetail';
+import LiveBackground from './components/LiveBackground';
 
 function App() {
     return (
         <Router>
             <AuthProvider>
+                <LiveBackground />
                 <Navbar />
                 <main>
                     <Routes>
