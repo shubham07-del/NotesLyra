@@ -53,8 +53,8 @@ const Navbar = () => {
                 <div className="flex justify-between h-20 items-center">
                     <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => navigate('/')}>
                         {/* Logo Icon */}
-                        <div>
-                            <img src="/nursing-vidya.jpeg" alt="" className='h-10 w-auto' />
+                        <div className='w-10 h-10 rounded-full border border-slate-200 dark:border-slate-800 overflow-hidden mr-3'>
+                            <img src="/nursing-vidya.jpeg" alt="" className='w-full h-full object-cover' />
                         </div>
                         <span className="font-bold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-primary-700 to-indigo-600 tracking-tight">
                             Nursing Vidya
